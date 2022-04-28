@@ -26,23 +26,17 @@
                             <div class="product-pic-zoom">
                                 <img class="product-big-img" :src="gambar_default" alt="" />
                             </div>
-                            <div class="product-thumbs">
+                            <div class="product-thumbs" v-if="productDetails.galleries.length > 0">
                                 <carousel  :dots="false" :nav="false"  class="product-thumbs-track ps-slider ">
-                                    <div class="pt" @click="changeImage(thumbs[0])" :class="thumbs[0] == gambar_default ? 'active' : '' ">
-                                        <img src="img/mickey1.jpg" alt="" />
+                                    <div 
+                                    v-for="ss in productDetails.galleries"
+                                    :key="ss.id"
+                                    class="pt" 
+                                    @click="changeImage(ss.photo)" 
+                                    :class="ss.photo == gambar_default ? 'active' : '' ">
+                                        <img :src="ss.photo" alt="" />
                                     </div>
-
-                                    <div class="pt" @click="changeImage(thumbs[1])" :class="thumbs[1] == gambar_default ? 'active' : '' ">
-                                        <img src="img/mickey2.jpg" alt="" />
-                                    </div>
-
-                                    <div class="pt" @click="changeImage(thumbs[2])" :class="thumbs[2] == gambar_default ? 'active' : '' ">
-                                        <img src="img/mickey3.jpg" alt="" />
-                                    </div>
-
-                                    <div class="pt" @click="changeImage(thumbs[3])" :class="thumbs[3] == gambar_default ? 'active' : '' ">
-                                        <img src="img/mickey4.jpg" alt="" />
-                                    </div>
+                                
                                 </carousel>
                             </div>
                         </div>
@@ -53,13 +47,14 @@
                                     <h3>{{ productDetails.name}}</h3>
                                 </div>
                                 <div class="pd-desc">
-                                    <p>
-                                        {{ productDetails.description}}
+                                    <p v-html="productDetails.description">
                                     </p>
                                     <h4>${{ productDetails.price}}</h4>
                                 </div>
                                 <div class="quantity">
-                                    <router-link to="/cart"><a href="shopping-cart.html" class="primary-btn pd-cart">Add To Cart</a></router-link>
+                                    <router-link to="/cart">
+                                    <a @click="saveKeranjang(productDetails.id, productDetails.name, productDetails.price, productDetails.galleries[0].photo)" href="#" class="primary-btn pd-cart">Add To Cart</a>
+                                    </router-link>
                                 </div>
                             </div>
                         </div>
@@ -88,7 +83,7 @@ import axios from "axios";
 // import carousel from 'vue-owl-carousel';
 
 export default {
-  name: "product",
+  name : "Product" ,
   components: {
    HeaderShayna,
    FooterShayna,
@@ -97,15 +92,10 @@ export default {
   },
   data() {
      return {
-         gambar_default: "img/mickey3.jpg",
-         thumbs: [
-             "img/mickey1.jpg",
-             "img/mickey2.jpg",
-             "img/mickey3.jpg",
-             "img/mickey4.jpg"
-         ],
+         gambar_default: '',
         //  idProduct: this.$route.params.id
-        productDetails: []
+        productDetails: [],
+        keranjangUser: []
      } 
   },
   methods: {
@@ -113,16 +103,46 @@ export default {
           this.gambar_default = urlImage;
         //   // eslint-disable-next-line no-console
         //   console.log(this.idProduct);
-      }
+      },
+      setDataPicture(data) {
+      // replace object productDetails dengan data diri
+      this.productDetails = data;
+      // replace value gambar default dengan data diri API (galleries)
+      this.gambar_default = data.galleries[0].photo;
+    },
+    saveKeranjang(idProduct, nameProduct, priceProduct, photoProduct) {
+
+        var productStored = {
+            "id": idProduct,
+            "name": nameProduct,
+            "price": priceProduct,
+            "photo": photoProduct
+        }
+
+
+        this.keranjangUser.push(productStored);
+        const parsed = JSON.stringify(this.keranjangUser);
+        localStorage.setItem('keranjangUser', parsed);
+    }
   },
+  
   mounted() {
+     
+        if (localStorage.getItem('keranjangUser')) {
+        try {
+            this.keranjangUser = JSON.parse(localStorage.getItem('keranjangUser'));
+        } catch(e) {
+            localStorage.removeItem('keranjangUser');
+        }
+        }
+
         axios
             .get("http://shayna-backend.belajarkoding.com/api/products",{
                 params: {
                     id: this.$route.params.id
                 }
             })
-            .then(res => (this.productDetails = res.data.data))
+            .then(res => (this.setDataPicture(res.data.data)))
             // eslint-disable-next-line no-console
             .catch(err => console.log(err));
     }
