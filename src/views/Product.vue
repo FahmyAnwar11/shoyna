@@ -83,7 +83,7 @@ import axios from "axios";
 // import carousel from 'vue-owl-carousel';
 
 export default {
-  name : "Product" ,
+  name : "product-component" ,
   components: {
    HeaderShayna,
    FooterShayna,
